@@ -7,20 +7,51 @@
 /// println!("{:?}", config);
 /// ```
 #[derive(Debug, PartialEq)]
-pub struct Config;
+pub struct Config {
+    /// The maximum recursion depth for directory scanning relative to the
+    /// starting directory.
+    pub directory_scan_depth: usize,
+}
 
-impl Config {
-    /// Creates a new `Config` instance with default settings.
+impl Default for Config {
+    /// Creates a `Config` instance with default settings.
+    ///
+    /// The default configuration sets:
+    /// - `directory_scan_depth` to `5`, which is a reasonable default for most use cases.
     ///
     /// # Examples
     ///
     /// ```
     /// use walrust::config::Config;
     ///
-    /// let config = Config::new();
-    /// assert_eq!(config, Config::new());
+    /// let config = Config::default();
+    /// assert_eq!(config.directory_scan_depth, 5);
     /// ```
-    pub fn new() -> Self {
-        Config
+    fn default() -> Self {
+        Config {
+            directory_scan_depth: 5,
+        }
+    }
+}
+
+impl Config {
+    /// Creates a new `Config` instance with default settings.
+    ///
+    /// This is equivalent to calling `Config::default()`.
+    ///
+    /// # Examples
+    ///
+    /// ```
+    /// use walrust::config::Config;
+    ///
+    /// let config = Config::new(None);
+    /// assert_eq!(config.directory_scan_depth, 5);
+    /// ```
+    pub fn new(directory_scan_depth: Option<usize>) -> Self {
+        let default_config = Config::default();
+        Config {
+            directory_scan_depth: directory_scan_depth
+                .unwrap_or_else(|| default_config.directory_scan_depth),
+        }
     }
 }
