@@ -3,7 +3,7 @@
 /// ```
 /// use walrust::config::Config;
 ///
-/// let config = Config::new();
+/// let config = Config::default();
 /// println!("{:?}", config);
 /// ```
 #[derive(Debug, PartialEq)]
@@ -53,5 +53,28 @@ impl Config {
             directory_scan_depth: directory_scan_depth
                 .unwrap_or_else(|| default_config.directory_scan_depth),
         }
+    }
+}
+
+#[cfg(test)]
+mod tests {
+    use super::*;
+
+    #[test]
+    fn test_default_config() {
+        let config = Config::default();
+        assert_eq!(config.directory_scan_depth, 5);
+    }
+
+    #[test]
+    fn test_new_config() {
+        let config = Config::new(Some(10));
+        assert_eq!(config.directory_scan_depth, 10);
+    }
+
+    #[test]
+    fn test_new_config_with_default() {
+        let config = Config::new(None);
+        assert_eq!(config.directory_scan_depth, 5);
     }
 }
