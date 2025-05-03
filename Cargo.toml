@@ -1,0 +1,27 @@
+[package]
+name = "walrust"
+version = "0.1.0"
+edition = "2021"
+authors = ["Cory Todd <cory@corytodd.us>"]
+description = "A command-line tool to query commit data from multiple Git repositories."
+license = "MIT"
+repository = "https://github.com/corytodd/walrust"
+homepage = "https://github.com/corytodd/walrust"
+documentation = "https://github.com/corytodd/walrust#readme"
+keywords = ["git", "cli", "commit", "query"]
+categories = ["command-line-utilities", "version-control"]
+readme = "README.md"
+
+[dependencies]
+chrono = "0.4"
+clap = { version = "4.0", features = ["derive"] }
+git2 = "0.16"
+
+
+[lib]
+name = "walrust"
+path = "src/lib.rs"
+
+[[bin]]
+name = "walrust"
+path = "src/bin/walrust.rs"
