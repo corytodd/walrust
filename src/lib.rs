@@ -2,17 +2,20 @@ use std::fmt;
 use std::io;
 use std::path::PathBuf;
 
-pub mod config;
 pub mod filesystem;
 pub mod repository;
 pub mod repository_locator;
 
 pub type Result<T> = std::result::Result<T, WalrustError>;
 
+/// Walrust error types.
 #[derive(Debug)]
 pub enum WalrustError {
+    /// An error related to Git operations.
     GitError(git2::Error),
+    /// An error related to IO operations.
     IoError(io::Error),
+    /// An error related to invalid paths.
     PathError(PathBuf),
 }
 
