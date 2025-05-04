@@ -1,54 +1,6 @@
 use std::fs;
+use crate::filesystem::{Filesystem, RealFilesystem};
 use std::path::{Path, PathBuf};
-
-/// A trait to abstract filesystem operations
-trait Filesystem {
-    /// Check if a path is a directory
-    ///
-    /// # Arguments
-    ///
-    /// * `path` - A reference to a `Path` object
-    ///
-    /// # Returns
-    ///
-    /// * `true` if the path is a directory, `false` otherwise
-    fn is_dir(&self, path: &Path) -> bool;
-    /// Read the contents of a directory
-    ///
-    /// # Arguments
-    ///
-    /// * `path` - A reference to a `Path` object
-    ///
-    /// # Returns
-    ///
-    /// * A `Result` containing a vector of `PathBuf` objects if successful, or an error
-    ///   if the operation fails
-    ///
-    /// # Errors
-    ///
-    /// * Returns an `std::io::Error` if the directory cannot be read
-    fn read_dir(&self, path: &Path) -> std::io::Result<Vec<PathBuf>>;
-}
-
-/// A concrete implementation of the Filesystem trait that interacts with the real filesystem
-#[derive(Debug)]
-struct RealFilesystem;
-
-impl Filesystem for RealFilesystem {
-    fn is_dir(&self, path: &Path) -> bool {
-        path.is_dir()
-    }
-
-    fn read_dir(&self, path: &Path) -> std::io::Result<Vec<PathBuf>> {
-        fs::read_dir(path)
-            .map(|entries| {
-                entries
-                    .filter_map(|entry| entry.ok().map(|e| e.path()))
-                    .collect()
-            })
-            .map_err(|e| std::io::Error::new(e.kind(), format!("Failed to read directory: {}", e)))
-    }
-}
 
 /// A struct to locate repositories in a given path
 struct RepositoryLocator<F: Filesystem> {

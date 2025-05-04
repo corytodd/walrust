@@ -4,6 +4,8 @@ use std::io;
 pub mod config;
 pub mod repository;
 pub mod repository_locator;
+
+mod filesystem;
 type Result<T> = std::result::Result<T, WalrustError>;
 
 #[derive(Debug)]
