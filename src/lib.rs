@@ -2,6 +2,7 @@ use std::fmt;
 use std::io;
 use std::path::PathBuf;
 
+pub mod commit;
 pub mod filesystem;
 pub mod repository;
 pub mod repository_locator;
