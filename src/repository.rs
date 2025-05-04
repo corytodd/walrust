@@ -179,15 +179,6 @@ impl GitRepository for LocalGitRepository {
 /// This struct provides a high-level abstraction for interacting with
 /// repositories, allowing for different implementations of the `GitRepository`
 /// trait to be used.
-///
-/// # Example
-/// ```rust
-/// use walrust::repository::{Repository, LocalGitRepository};
-/// use std::path::PathBuf;
-///
-/// let repo = Repository::<LocalGitRepository>::new(&PathBuf::from(".")).unwrap();
-/// println!("Repository name: {}", repo.get_name());
-/// ```
 pub struct Repository<G: GitRepository = LocalGitRepository> {
     /// The path to the local repository.
     pub uri: PathBuf,

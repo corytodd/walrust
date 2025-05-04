@@ -1,7 +1,6 @@
 mod mock_git_repository;
 use mock_git_repository::MockGitRepository;
 use std::path::Path;
-use walrust::commit::Commit;
 use walrust::repository::Repository;
 use walrust::WalrustError;
 
