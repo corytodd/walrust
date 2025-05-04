@@ -7,11 +7,11 @@ pub trait Filesystem {
     fn read_dir(&self, path: &Path) -> std::io::Result<Vec<PathBuf>>;
 }
 
-/// A concrete implementation of the Filesystem trait that interacts with the real filesystem
+/// A concrete implementation of the Filesystem trait that interacts with the local filesystem
 #[derive(Debug)]
-pub struct RealFilesystem;
+pub struct LocalFilesystem;
 
-impl Filesystem for RealFilesystem {
+impl Filesystem for LocalFilesystem {
     fn is_dir(&self, path: &Path) -> bool {
         path.is_dir()
     }

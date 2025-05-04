@@ -1,4 +1,4 @@
-use crate::filesystem::{Filesystem, RealFilesystem};
+use crate::filesystem::{Filesystem, LocalFilesystem};
 use std::path::{Path, PathBuf};
 
 /// A trait to define the behavior of a repository query
@@ -8,7 +8,7 @@ pub trait RepoProbe {
 }
 
 /// A struct to locate repositories in a given path
-pub struct RepositoryLocator<F: Filesystem, R: RepoProbe> {
+pub struct RepositoryLocator<F: Filesystem = LocalFilesystem, R: RepoProbe = GitRepoProbe> {
     /// The filesystem to use for operations.
     filesystem: F,
     /// The repository query to use for checking if a path is a repository.
@@ -66,13 +66,13 @@ impl RepoProbe for GitRepoProbe {
 }
 
 pub struct GitRepositoryLocator {
-    inner: RepositoryLocator<RealFilesystem, GitRepoProbe>,
+    inner: RepositoryLocator,
 }
 
 impl GitRepositoryLocator {
     pub fn new(search_root: &Path, search_depth: usize) -> Self {
         let locator =
-            RepositoryLocator::new(RealFilesystem, GitRepoProbe, search_root, search_depth);
+            RepositoryLocator::new(LocalFilesystem, GitRepoProbe, search_root, search_depth);
         Self { inner: locator }
     }
 
