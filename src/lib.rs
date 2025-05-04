@@ -3,11 +3,11 @@ use std::io;
 use std::path::PathBuf;
 
 pub mod config;
+pub mod filesystem;
 pub mod repository;
 pub mod repository_locator;
 
-mod filesystem;
-type Result<T> = std::result::Result<T, WalrustError>;
+pub type Result<T> = std::result::Result<T, WalrustError>;
 
 #[derive(Debug)]
 pub enum WalrustError {

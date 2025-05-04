@@ -6,6 +6,7 @@ pub struct Repository {
     pub uri: PathBuf,
     /// The name of the repository.
     pub name: String,
+    // TODO(cat): this will own the Git repository object
 }
 
 impl Repository {
