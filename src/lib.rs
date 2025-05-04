@@ -1,5 +1,6 @@
 use std::fmt;
 use std::io;
+use std::path::PathBuf;
 
 pub mod config;
 pub mod repository;
@@ -12,7 +13,7 @@ type Result<T> = std::result::Result<T, WalrustError>;
 pub enum WalrustError {
     GitError(git2::Error),
     IoError(io::Error),
-    PathError(io::Error),
+    PathError(PathBuf),
 }
 
 impl fmt::Display for WalrustError {
@@ -20,7 +21,7 @@ impl fmt::Display for WalrustError {
         match self {
             WalrustError::GitError(err) => write!(f, "Git error: {}", err),
             WalrustError::IoError(err) => write!(f, "IO error: {}", err),
-            WalrustError::PathError(err) => write!(f, "Path error: {}", err),
+            WalrustError::PathError(path) => write!(f, "Invalid path: {}", path.display()),
         }
     }
 }
