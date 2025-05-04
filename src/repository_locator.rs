@@ -3,6 +3,10 @@ use std::path::{Path, PathBuf};
 
 /// A trait to define the behavior of a repository query
 pub trait RepoProbe {
+    fn new() -> Self
+    where
+        Self: Sized;
+
     /// Check if the given path is a repository
     fn is_repo(&self, path: &Path) -> bool;
 }
@@ -22,8 +26,8 @@ pub struct RepositoryLocator<F: Filesystem = LocalFilesystem, R: RepoProbe = Git
 impl<F: Filesystem, R: RepoProbe> RepositoryLocator<F, R> {
     pub fn new(filesystem: F, repo_probe: R, search_root: &Path, search_depth: usize) -> Self {
         Self {
-            filesystem,
-            repo_probe,
+            filesystem: F::new(),
+            repo_probe: R::new(),
             search_root: search_root.to_path_buf(),
             search_depth,
         }
@@ -57,9 +61,17 @@ impl<F: Filesystem, R: RepoProbe> RepositoryLocator<F, R> {
     }
 }
 
+/// Probes for Git repositories
+///
+/// This probe implements a filesystem check to avoid the overhead
+/// of creating a git repository object for every potential repository.
 pub struct GitRepoProbe;
 
 impl RepoProbe for GitRepoProbe {
+    fn new() -> Self {
+        Self
+    }
+
     fn is_repo(&self, path: &Path) -> bool {
         path.ends_with(".git")
     }

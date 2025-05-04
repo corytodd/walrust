@@ -3,6 +3,9 @@ use std::path::{Path, PathBuf};
 
 /// A trait to abstract filesystem operations
 pub trait Filesystem {
+    fn new() -> Self
+    where
+        Self: Sized;
     fn is_dir(&self, path: &Path) -> bool;
     fn read_dir(&self, path: &Path) -> std::io::Result<Vec<PathBuf>>;
 }
@@ -12,6 +15,10 @@ pub trait Filesystem {
 pub struct LocalFilesystem;
 
 impl Filesystem for LocalFilesystem {
+    fn new() -> Self {
+        LocalFilesystem
+    }
+
     fn is_dir(&self, path: &Path) -> bool {
         path.is_dir()
     }

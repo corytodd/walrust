@@ -117,6 +117,10 @@ impl MockFilesystem {
 }
 
 impl Filesystem for MockFilesystem {
+    fn new() -> Self {
+        Self::new(create_mock_directory_tree())
+    }
+
     fn is_dir(&self, path: &Path) -> bool {
         matches!(self.find_node(path), Some(MockFsNode::Directory(_)))
     }
