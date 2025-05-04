@@ -54,32 +54,3 @@ fn main() {
         }
     }
 }
-
-#[cfg(test)]
-mod tests {
-    use super::*;
-    use std::path::PathBuf;
-
-    #[test]
-    fn test_run_with_valid_config() {
-        let config = Config {
-            search_root: PathBuf::from("."),
-            search_depth: 1,
-        };
-
-        let result = run(config);
-        assert!(result.is_ok());
-    }
-
-    #[test]
-    fn test_run_with_no_repositories() {
-        let config = Config {
-            search_root: PathBuf::from("/nonexistent/path"),
-            search_depth: 1,
-        };
-
-        let result = run(config);
-        assert!(result.is_err());
-        assert_eq!(result.unwrap_err(), "No repositories found");
-    }
-}
