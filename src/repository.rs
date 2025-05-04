@@ -9,6 +9,34 @@ use std::path::PathBuf;
 /// This trait defines the behavior expected from a Git repository,
 /// including creating a new instance, retrieving the current HEAD,
 /// and fetching commits within a date range.
+///
+/// # Example
+/// ```rust
+/// use walrust::commit::Commit;
+/// use walrust::repository::GitRepository;
+/// use walrust::Result;
+/// use std::path::PathBuf;
+/// use chrono::{Utc, DateTime};
+///
+/// struct MockGitRepository;
+///
+/// impl GitRepository for MockGitRepository {
+///     fn new(_path: &PathBuf) -> Result<Self> {
+///         Ok(MockGitRepository)
+///     }
+///
+///     fn head(&self) -> String {
+///         "mock_head".to_string()
+///     }
+///
+///     fn get_commits(&self, _since: DateTime<Utc>, _until: DateTime<Utc>) -> Result<Vec<Commit>> {
+///         Ok(vec![])
+///     }
+/// }
+///
+/// let repo = MockGitRepository::new(&PathBuf::from("/mock/repo")).unwrap();
+/// assert_eq!(repo.head(), "mock_head");
+/// ```
 pub trait GitRepository {
     /// Create a new instance of the GitRepository.
     ///
@@ -51,6 +79,15 @@ pub trait GitRepository {
 ///
 /// This struct provides an implementation of the `GitRepository` trait
 /// for repositories stored on the local filesystem.
+///
+/// # Example
+/// ```rust
+/// use walrust::repository::{GitRepository, LocalGitRepository};
+/// use std::path::PathBuf;
+///
+/// let repo = LocalGitRepository::new(&PathBuf::from(".")).unwrap();
+/// println!("HEAD: {}", repo.head());
+/// ```
 pub struct LocalGitRepository {
     git: LibGitRepository,
 }
@@ -142,6 +179,15 @@ impl GitRepository for LocalGitRepository {
 /// This struct provides a high-level abstraction for interacting with
 /// repositories, allowing for different implementations of the `GitRepository`
 /// trait to be used.
+///
+/// # Example
+/// ```rust
+/// use walrust::repository::{Repository, LocalGitRepository};
+/// use std::path::PathBuf;
+///
+/// let repo = Repository::<LocalGitRepository>::new(&PathBuf::from(".")).unwrap();
+/// println!("Repository name: {}", repo.get_name());
+/// ```
 pub struct Repository<G: GitRepository = LocalGitRepository> {
     /// The path to the local repository.
     pub uri: PathBuf,
@@ -191,5 +237,29 @@ impl<G: GitRepository> Repository<G> {
     /// A reference to the name of the repository.
     pub fn get_name(&self) -> &String {
         &self.name
+    }
+
+    /// Get the commits in the repository between two optional dates.
+    ///
+    /// # Arguments
+    ///
+    /// * `since` - Optional start date for the commit range (defaults to 30 days ago).
+    /// * `until` - Optional end date for the commit range (defaults to now).
+    ///
+    /// # Returns
+    ///
+    /// A vector of commits within the specified date range.
+    ///
+    /// # Errors
+    ///
+    /// Returns an error if the commit retrieval fails.
+    pub fn get_commits(
+        &mut self,
+        since: Option<DateTime<Utc>>,
+        until: Option<DateTime<Utc>>,
+    ) -> Result<Vec<Commit>> {
+        let since = since.unwrap_or_else(|| Utc::now() - chrono::Duration::days(30));
+        let until = until.unwrap_or_else(Utc::now);
+        self.vcs.get_commits(since, until)
     }
 }
