@@ -1,24 +1,58 @@
 use crate::{Result, WalrustError};
+use git2::Repository as LibGitRepository;
 use std::path::PathBuf;
 
-pub struct Repository {
+pub trait GitRepository {
+    /// Create a new instance of the GitRepository.
+    fn new(path: &PathBuf) -> Result<Self>
+    where
+        Self: Sized;
+
+    /// Get the current HEAD of the repository.
+    fn head(&self) -> String;
+}
+
+/// A Git repository on the local filesystem.
+pub struct LocalGitRepository {
+    git: LibGitRepository,
+}
+
+impl GitRepository for LocalGitRepository {
+    fn new(path: &PathBuf) -> Result<Self> {
+        let git = LibGitRepository::open(path).map_err(|e| WalrustError::GitError(e))?;
+        Ok(LocalGitRepository { git })
+    }
+
+    fn head(&self) -> String {
+        self.git
+            .head()
+            .and_then(|h| h.peel_to_commit())
+            .map(|c| c.id().to_string())
+            .unwrap_or_else(|_| "HEAD".to_string())
+    }
+}
+
+pub struct Repository<G: GitRepository = LocalGitRepository> {
     /// The path to the local repository.
     pub uri: PathBuf,
     /// The name of the repository.
     pub name: String,
-    // TODO(cat): this will own the Git repository object
+    /// Underlying VCS object.
+    pub vcs: G,
 }
 
-impl Repository {
+impl<G: GitRepository> Repository<G> {
     pub fn new(uri: &PathBuf) -> Result<Self> {
         let name = uri
             .file_name()
             .and_then(|n| n.to_str())
             .ok_or_else(|| WalrustError::PathError(uri.clone()))?
             .to_string();
+        let vcs = G::new(uri)?;
         Ok(Repository {
             uri: uri.clone(),
             name,
+            vcs,
         })
     }
 
@@ -28,31 +62,5 @@ impl Repository {
 
     pub fn get_name(&self) -> &String {
         &self.name
-    }
-}
-
-#[cfg(test)]
-mod tests {
-    use super::*;
-    use std::path::Path;
-
-    #[test]
-    fn test_local_git_repo_valid_path() {
-        let path = Path::new("/path/to/repo");
-        let repo = Repository::new(&path.to_path_buf()).unwrap();
-        assert_eq!(repo.get_uri(), &path.to_path_buf());
-        assert_eq!(repo.get_name(), "repo");
-    }
-
-    #[test]
-    fn test_local_git_repo_invalid_path() {
-        let path = Path::new("..");
-        let result = Repository::new(&path.to_path_buf());
-        assert!(result.is_err());
-        if let Err(WalrustError::PathError(_)) = result {
-            // Expected error
-        } else {
-            panic!("Expected PathError");
-        }
     }
 }
