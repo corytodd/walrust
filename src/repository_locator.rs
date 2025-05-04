@@ -123,7 +123,8 @@ impl<F: Filesystem, G: GitRepository, R: RepoProbe> RepositoryLocator<F, G, R> {
     ///
     /// # Example
     /// ```rust
-    /// let locator = GitRepositoryLocator::new(Path::new("/path/to/search"), 2);
+    /// use walrust::repository_locator::GitRepositoryLocator;
+    /// let locator = GitRepositoryLocator::new(std::path::Path::new("/path/to/search"), 2);
     /// let repositories = locator.locate().unwrap();
     /// for repo in repositories {
     ///     println!("Found repository: {}", repo.uri.display());
@@ -194,18 +195,18 @@ impl<F: Filesystem, G: GitRepository, R: RepoProbe> RepositoryLocator<F, G, R> {
 ///
 /// # Example
 /// ```rust
-/// use walrust::repository_locator::GitRepoProbe;
+/// use walrust::repository_locator::{GitRepoProbe, RepoProbe};
 /// use std::path::Path;
 ///
 /// let probe = GitRepoProbe::new();
-/// assert!(probe.is_repo(Path::new("/path/to/repo/.git")));
-/// assert!(!probe.is_repo(Path::new("/path/to/repo")));
+/// assert!(probe.is_repo(std::path::Path::new("/path/to/repo/.git")));
+/// assert!(!probe.is_repo(std::path::Path::new("/path/to/repo")));
 /// ```
 pub struct GitRepoProbe;
 
 impl RepoProbe for GitRepoProbe {
     fn new() -> Self {
-        Self
+        GitRepoProbe
     }
 
     fn is_repo(&self, path: &Path) -> bool {

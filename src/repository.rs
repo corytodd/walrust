@@ -1,4 +1,6 @@
+use crate::commit::Commit;
 use crate::{Result, WalrustError};
+use chrono::{DateTime, Utc};
 use git2::Repository as LibGitRepository;
 use std::path::PathBuf;
 
@@ -27,6 +29,22 @@ pub trait GitRepository {
     ///
     /// A string representing the current HEAD commit hash.
     fn head(&self) -> String;
+
+    /// Get the commits in the repository between two dates.
+    ///
+    /// # Arguments
+    ///
+    /// * `since` - Inclusive start date for the commit range.
+    /// * `until` - Inclusive end date for the commit range.
+    ///
+    /// # Returns
+    ///
+    /// A vector of commits within the specified date range.
+    ///
+    /// # Errors
+    ///
+    /// Returns an error if the commit retrieval fails.
+    fn get_commits(&self, since: DateTime<Utc>, until: DateTime<Utc>) -> Result<Vec<Commit>>;
 }
 
 /// A Git repository on the local filesystem.
@@ -63,6 +81,59 @@ impl GitRepository for LocalGitRepository {
             .and_then(|h| h.peel_to_commit())
             .map(|c| c.id().to_string())
             .unwrap_or_else(|_| "HEAD".to_string())
+    }
+
+    /// Get the commits in the repository between two dates.
+    ///
+    /// # Arguments
+    ///
+    /// * `since` - Inclusive start date for the commit range.
+    /// * `until` - Inclusive end date for the commit range.
+    ///
+    /// # Returns
+    ///
+    /// A vector of commits within the specified date range.
+    ///
+    /// # Errors
+    ///
+    /// Returns an error if the commit retrieval fails.
+    fn get_commits(&self, since: DateTime<Utc>, until: DateTime<Utc>) -> Result<Vec<Commit>> {
+        let mut revwalk = self.git.revwalk()?;
+        revwalk.push_head()?; // Start from HEAD
+        revwalk.set_sorting(git2::Sort::TIME)?; // Sort commits by time (newest to oldest)
+        let mut commits = Vec::new();
+
+        for oid in revwalk {
+            let oid = oid?;
+            let commit = self.git.find_commit(oid)?;
+
+            let commit_date = DateTime::from_timestamp(commit.time().seconds(), 0).ok_or(
+                WalrustError::GitError(git2::Error::from_str(
+                    "Failed to convert commit time to DateTime",
+                )),
+            )?;
+
+            // Stop processing if the commit is older than the `since` date
+            if commit_date < since {
+                break;
+            }
+
+            // Only include commits within the date range
+            if commit_date <= until {
+                let commit_hash = commit.id().to_string();
+                commits.push(Commit::new(
+                    commit.summary().unwrap_or_default().to_string(),
+                    commit.author().name().unwrap_or_default().to_string(),
+                    commit.author().email().unwrap_or_default().to_string(),
+                    commit_date,
+                    commit.message().unwrap_or_default().to_string(),
+                    commit_hash.clone()[..7].to_string(),
+                    commit_hash.clone(),
+                ));
+            }
+        }
+
+        Ok(commits)
     }
 }
 
