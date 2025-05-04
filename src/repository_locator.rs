@@ -1,4 +1,8 @@
-use crate::filesystem::{Filesystem, LocalFilesystem};
+use crate::Result;
+use crate::{
+    filesystem::{Filesystem, LocalFilesystem},
+    repository::{GitRepository, LocalGitRepository, Repository},
+};
 use std::path::{Path, PathBuf};
 
 /// A trait to define the behavior of a repository query
@@ -12,7 +16,11 @@ pub trait RepoProbe {
 }
 
 /// A struct to locate repositories in a given path
-pub struct RepositoryLocator<F: Filesystem = LocalFilesystem, R: RepoProbe = GitRepoProbe> {
+pub struct RepositoryLocator<
+    F: Filesystem = LocalFilesystem,
+    G: GitRepository = LocalGitRepository,
+    R: RepoProbe = GitRepoProbe,
+> {
     /// The filesystem to use for operations.
     filesystem: F,
     /// The repository query to use for checking if a path is a repository.
@@ -21,27 +29,33 @@ pub struct RepositoryLocator<F: Filesystem = LocalFilesystem, R: RepoProbe = Git
     search_root: PathBuf,
     /// The maximum depth to search for repositories.
     search_depth: usize,
+    phantom: std::marker::PhantomData<G>,
 }
 
-impl<F: Filesystem, R: RepoProbe> RepositoryLocator<F, R> {
-    pub fn new(filesystem: F, repo_probe: R, search_root: &Path, search_depth: usize) -> Self {
+impl<F: Filesystem, G: GitRepository, R: RepoProbe> RepositoryLocator<F, G, R> {
+    pub fn new(search_root: &Path, search_depth: usize) -> Self {
         Self {
             filesystem: F::new(),
             repo_probe: R::new(),
             search_root: search_root.to_path_buf(),
             search_depth,
+            phantom: std::marker::PhantomData,
         }
     }
 
-    pub fn locate(&self) -> Vec<PathBuf> {
+    pub fn locate(&self) -> Result<Vec<Repository<G>>> {
         // Directory count is zero base so we need to add 1
         self.locate_recursive(&self.search_root, self.search_depth + 1)
     }
 
-    fn locate_recursive(&self, search_root: &Path, search_depth: usize) -> Vec<PathBuf> {
-        let mut repositories = Vec::new();
+    fn locate_recursive(
+        &self,
+        search_root: &Path,
+        search_depth: usize,
+    ) -> Result<Vec<Repository<G>>> {
+        let mut repositories: Vec<Repository<G>> = Vec::new();
         if search_depth == 0 {
-            return repositories;
+            return Ok(repositories);
         }
 
         if self.filesystem.is_dir(search_root) {
@@ -49,15 +63,27 @@ impl<F: Filesystem, R: RepoProbe> RepositoryLocator<F, R> {
                 let entry_path = entry.as_path();
                 if self.filesystem.is_dir(&entry_path) {
                     if self.repo_probe.is_repo(&entry_path) {
-                        repositories.push(search_root.to_path_buf());
+                        let repo: Result<Repository<G>> =
+                            Repository::new(&search_root.to_path_buf());
+                        match repo {
+                            Ok(repo) => repositories.push(repo),
+                            Err(err) => {
+                                eprintln!("Error creating repository object: {}", err);
+                            }
+                        }
                     } else {
                         let sub_repositories = self.locate_recursive(&entry_path, search_depth - 1);
-                        repositories.extend(sub_repositories);
+                        match sub_repositories {
+                            Ok(sub_repositories) => repositories.extend(sub_repositories),
+                            Err(err) => {
+                                eprintln!("Error locating sub-repositories: {}", err);
+                            }
+                        }
                     }
                 }
             }
         }
-        repositories
+        Ok(repositories)
     }
 }
 
@@ -77,18 +103,5 @@ impl RepoProbe for GitRepoProbe {
     }
 }
 
-pub struct GitRepositoryLocator {
-    inner: RepositoryLocator,
-}
-
-impl GitRepositoryLocator {
-    pub fn new(search_root: &Path, search_depth: usize) -> Self {
-        let locator =
-            RepositoryLocator::new(LocalFilesystem, GitRepoProbe, search_root, search_depth);
-        Self { inner: locator }
-    }
-
-    pub fn locate(&self) -> Vec<PathBuf> {
-        self.inner.locate()
-    }
-}
+pub type GitRepositoryLocator =
+    RepositoryLocator<LocalFilesystem, LocalGitRepository, GitRepoProbe>;
