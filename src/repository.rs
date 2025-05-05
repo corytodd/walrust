@@ -1,4 +1,4 @@
-use crate::commit::Commit;
+use crate::commit::{Commit, CommitAuthor, CommitHash};
 use crate::{Result, WalrustError};
 use chrono::{DateTime, Utc};
 use git2::Repository as LibGitRepository;
@@ -157,15 +157,18 @@ impl GitRepository for LocalGitRepository {
 
             // Only include commits within the date range
             if commit_date <= until {
-                let commit_hash = commit.id().to_string();
-                commits.push(Commit::new(
-                    commit.summary().unwrap_or_default().to_string(),
+                let commit_hash = CommitHash::new(commit.id().to_string());
+                let commit_author = CommitAuthor::new(
                     commit.author().name().unwrap_or_default().to_string(),
                     commit.author().email().unwrap_or_default().to_string(),
+                );
+
+                commits.push(Commit::new(
+                    commit.summary().unwrap_or_default().to_string(),
+                    commit_author,
                     commit_date,
                     commit.message().unwrap_or_default().to_string(),
-                    commit_hash.clone()[..7].to_string(),
-                    commit_hash.clone(),
+                    commit_hash,
                 ));
             }
         }

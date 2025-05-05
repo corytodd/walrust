@@ -177,7 +177,7 @@ fn run(config: Config) -> Result<(), String> {
 
     let author_predicate = |commit: &Commit| match author_match {
         ref author if author.is_empty() => true,
-        ref author if commit.author().eq(author) => true,
+        ref author if commit.author.email == *author || commit.author.email == *author => true,
         _ => false,
     };
 
@@ -199,7 +199,7 @@ fn run(config: Config) -> Result<(), String> {
                 for commit in &filtered_commits {
                     println!(
                         "{} {} {}",
-                        commit.hash_short,
+                        commit.hash.short,
                         commit.commit_date.to_rfc3339(),
                         commit.title
                     );
