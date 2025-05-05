@@ -4,39 +4,6 @@ use chrono::{DateTime, Utc};
 use git2::Repository as LibGitRepository;
 use std::path::PathBuf;
 
-/// A trait representing a generic Git repository.
-///
-/// This trait defines the behavior expected from a Git repository,
-/// including creating a new instance, retrieving the current HEAD,
-/// and fetching commits within a date range.
-///
-/// # Example
-/// ```rust
-/// use walrust::commit::Commit;
-/// use walrust::repository::GitRepository;
-/// use walrust::Result;
-/// use std::path::PathBuf;
-/// use chrono::{Utc, DateTime};
-///
-/// struct MockGitRepository;
-///
-/// impl GitRepository for MockGitRepository {
-///     fn new(_path: &PathBuf) -> Result<Self> {
-///         Ok(MockGitRepository)
-///     }
-///
-///     fn head(&self) -> String {
-///         "mock_head".to_string()
-///     }
-///
-///     fn get_commits(&self, _since: DateTime<Utc>, _until: DateTime<Utc>) -> Result<Vec<Commit>> {
-///         Ok(vec![])
-///     }
-/// }
-///
-/// let repo = MockGitRepository::new(&PathBuf::from("/mock/repo")).unwrap();
-/// assert_eq!(repo.head(), "mock_head");
-/// ```
 pub trait GitRepository {
     /// Create a new instance of the GitRepository.
     ///
@@ -47,6 +14,9 @@ pub trait GitRepository {
     /// # Returns
     ///
     /// A `Result` containing the new instance of the GitRepository or an error.
+    /// If the repository cannot be opened, an error is returned.
+    /// If the path is not a valid Git repository, an error is returned.
+    /// If the path does not exist, an error is returned.
     fn new(path: &PathBuf) -> Result<Self>
     where
         Self: Sized;
@@ -103,6 +73,15 @@ impl GitRepository for LocalGitRepository {
     ///
     /// A `Result` containing the new instance of `LocalGitRepository` or an error.
     fn new(path: &PathBuf) -> Result<Self> {
+        if !path.exists() {
+            return Err(WalrustError::PathError(path.clone()));
+        }
+        if !path.is_dir() {
+            return Err(WalrustError::PathError(path.clone()));
+        }
+        if !path.join(".git").exists() {
+            return Err(WalrustError::PathError(path.clone()));
+        }
         let git = LibGitRepository::open(path).map_err(|e| WalrustError::GitError(e))?;
         Ok(LocalGitRepository { git })
     }
