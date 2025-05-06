@@ -51,6 +51,11 @@ pub struct MockGitRepository {
 }
 
 impl GitRepository for MockGitRepository {
+    fn is_repo(path: &std::path::Path) -> bool {
+        // This is not a real path so check the leaf directory
+        path.ends_with(".git")
+    }
+
     /// Creates a new instance of `MockGitRepository`.
     ///
     /// # Arguments

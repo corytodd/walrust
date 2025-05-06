@@ -2,9 +2,20 @@ use crate::commit::{Commit, CommitAuthor, CommitHash};
 use crate::{Result, WalrustError};
 use chrono::{DateTime, Utc};
 use git2::Repository as LibGitRepository;
-use std::path::PathBuf;
+use std::path::{Path, PathBuf};
 
 pub trait GitRepository {
+    /// Determines if the given path is a repository.
+    ///
+    /// # Arguments
+    ///
+    /// * `path` - The path to check.
+    ///
+    /// # Returns
+    ///
+    /// `true` if the path is a valid Git repository, `false` otherwise.
+    fn is_repo(path: &Path) -> bool;
+
     /// Create a new instance of the GitRepository.
     ///
     /// # Arguments
@@ -63,6 +74,10 @@ pub struct LocalGitRepository {
 }
 
 impl GitRepository for LocalGitRepository {
+    fn is_repo(path: &Path) -> bool {
+        path.join(".git").exists()
+    }
+
     /// Create a new instance of a `LocalGitRepository`.
     ///
     /// # Arguments
@@ -73,12 +88,6 @@ impl GitRepository for LocalGitRepository {
     ///
     /// A `Result` containing the new instance of `LocalGitRepository` or an error.
     fn new(path: &PathBuf) -> Result<Self> {
-        if !path.exists() {
-            return Err(WalrustError::PathError(path.clone()));
-        }
-        if !path.is_dir() {
-            return Err(WalrustError::PathError(path.clone()));
-        }
         if !path.join(".git").exists() {
             return Err(WalrustError::PathError(path.clone()));
         }
