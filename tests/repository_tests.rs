@@ -1,4 +1,5 @@
 mod mock_git_repository;
+use chrono::Utc;
 use mock_git_repository::MockGitRepository;
 use std::path::Path;
 use walrust::repository::Repository;
@@ -58,5 +59,25 @@ mod tests {
         } else {
             panic!("Expected PathError");
         }
+    }
+
+    /// Tests that `get_commits` can be called on a `MockRepository`.
+    ///
+    /// This test verifies that the `get_commits` method can be called and
+    /// returns the expected result (in this case, an empty vector for the mock).
+    #[test]
+    fn test_get_commits() {
+        let path = Path::new("/path/to/repo");
+        let repo = MockRepository::new(&path.to_path_buf());
+        assert!(repo.is_ok());
+
+        let repo = repo.unwrap();
+        let since = Utc::now();
+        let until = Utc::now();
+        let commits = repo.get_commits(since, until);
+        assert!(commits.is_ok());
+
+        let commits = commits.unwrap();
+        assert!(commits.is_empty());
     }
 }
