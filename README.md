@@ -1,5 +1,7 @@
 # Walrust
 
+[![Rust](https://github.com/corytodd/walrust/actions/workflows/rust.yml/badge.svg)](https://github.com/corytodd/walrust/actions/workflows/rust.yml)
+
 Walrust is a command-line tool designed to query commit data from multiple Git repositories simultaneously. It simplifies the process of gathering and analyzing commit history, making it easier for developers and teams to track changes across their projects.
 
 This is a port of my [Walrus C# project][1], mostly just for fun.
