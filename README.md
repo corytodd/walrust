@@ -39,7 +39,7 @@ This command searches for Git repositories in /path/to/search up to a depth of 3
 **Filter Commits by Date Range**
 
 ```
-walrust -r /path/to/search -d 3 --since "2025-01-01" --until "2025-12-31"
+walrust -r /path/to/search -d 3 --since 2025-01-01 --until 2025-12-31
 ```
 
 This command retrieves commits made between January 1, 2025, and December 31, 2025.
@@ -47,10 +47,10 @@ This command retrieves commits made between January 1, 2025, and December 31, 20
 
 **Filter Commits by Author**
 ```
-walrust -r /path/to/search -d 3 --author "John Doe <john.doe@example.com>"
+walrust -r /path/to/search -d 3 --author "Bix Andor <bix@radioshack.com>"
 ```
 
-This command retrieves commits authored by "John Doe" in the specified repositories.
+This command retrieves commits authored by "Bix Andor" in the specified repositories.
 
 ## Configuration
 
