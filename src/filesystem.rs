@@ -112,3 +112,74 @@ impl Filesystem for LocalFilesystem {
         path.exists()
     }
 }
+
+#[cfg(test)]
+mod tests {
+    use super::*;
+    use std::fs::File;
+    use tempfile::tempdir;
+
+    #[test]
+    fn test_is_dir() {
+        let fs = LocalFilesystem::new();
+        let temp_dir = tempdir().unwrap();
+
+        // Check that the temporary directory is recognized as a directory
+        assert!(fs.is_dir(temp_dir.path()));
+
+        // Check that a non-existent path is not recognized as a directory
+        let non_existent_path = temp_dir.path().join("non_existent");
+        assert!(!fs.is_dir(&non_existent_path));
+    }
+
+    #[test]
+    fn test_read_dir() {
+        let fs = LocalFilesystem::new();
+        let temp_dir = tempdir().unwrap();
+
+        // Create some files in the temporary directory
+        File::create(temp_dir.path().join("file1.txt")).unwrap();
+        File::create(temp_dir.path().join("file2.txt")).unwrap();
+
+        // Read the directory contents
+        let entries = fs.read_dir(temp_dir.path()).unwrap();
+        let entry_names: Vec<_> = entries
+            .iter()
+            .map(|entry| entry.file_name().unwrap().to_string_lossy().to_string())
+            .collect();
+
+        // Check that the directory contains the expected files
+        assert!(entry_names.contains(&"file1.txt".to_string()));
+        assert!(entry_names.contains(&"file2.txt".to_string()));
+    }
+
+    #[test]
+    fn test_read_dir_non_existent() {
+        let fs = LocalFilesystem::new();
+        let temp_dir = tempdir().unwrap();
+
+        // Try to read a non-existent directory
+        let non_existent_path = temp_dir.path().join("non_existent");
+        let result = fs.read_dir(&non_existent_path);
+
+        // Check that an error is returned
+        assert!(result.is_err());
+    }
+
+    #[test]
+    fn test_exists() {
+        let fs = LocalFilesystem::new();
+        let temp_dir = tempdir().unwrap();
+
+        // Create a file in the temporary directory
+        let file_path = temp_dir.path().join("file.txt");
+        File::create(&file_path).unwrap();
+
+        // Check that the file exists
+        assert!(fs.exists(&file_path));
+
+        // Check that a non-existent path does not exist
+        let non_existent_path = temp_dir.path().join("non_existent");
+        assert!(!fs.exists(&non_existent_path));
+    }
+}
