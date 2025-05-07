@@ -210,11 +210,9 @@ impl<G: GitRepository> Repository<G> {
     /// Returns an error if the commit retrieval fails.
     pub fn get_commits(
         &mut self,
-        since: Option<DateTime<Utc>>,
-        until: Option<DateTime<Utc>>,
+        since: DateTime<Utc>,
+        until: DateTime<Utc>,
     ) -> Result<Vec<Commit>> {
-        let since = since.unwrap_or_else(|| Utc::now() - chrono::Duration::days(30));
-        let until = until.unwrap_or_else(Utc::now);
         self.vcs.get_commits(since, until)
     }
 }
