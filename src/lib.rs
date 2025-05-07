@@ -91,3 +91,51 @@ impl From<io::Error> for WalrustError {
         WalrustError::IoError(err)
     }
 }
+#[cfg(test)]
+mod tests {
+    use super::*;
+
+    #[test]
+    fn test_walrust_error_display_git_error() {
+        let git_error = git2::Error::from_str("Git operation failed");
+        let error = WalrustError::GitError(git_error);
+        assert_eq!(format!("{}", error), "Git error: Git operation failed");
+    }
+
+    #[test]
+    fn test_walrust_error_display_io_error() {
+        let io_error = io::Error::new(io::ErrorKind::Other, "IO operation failed");
+        let error = WalrustError::IoError(io_error);
+        assert_eq!(format!("{}", error), "IO error: IO operation failed");
+    }
+
+    #[test]
+    fn test_walrust_error_display_path_error() {
+        let path = PathBuf::from("/invalid/path");
+        let error = WalrustError::PathError(path.clone());
+        assert_eq!(
+            format!("{}", error),
+            format!("Invalid path: {}", path.display())
+        );
+    }
+
+    #[test]
+    fn test_walrust_error_from_git_error() {
+        let git_error = git2::Error::from_str("Git operation failed");
+        let error: WalrustError = git_error.into();
+        match error {
+            WalrustError::GitError(_) => assert!(true),
+            _ => assert!(false, "Expected WalrustError::GitError"),
+        }
+    }
+
+    #[test]
+    fn test_walrust_error_from_io_error() {
+        let io_error = io::Error::new(io::ErrorKind::Other, "IO operation failed");
+        let error: WalrustError = io_error.into();
+        match error {
+            WalrustError::IoError(_) => assert!(true),
+            _ => assert!(false, "Expected WalrustError::IoError"),
+        }
+    }
+}
