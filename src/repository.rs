@@ -19,17 +19,6 @@ use std::path::{Path, PathBuf};
 /// println!("HEAD: {}", repo.head());
 /// ```
 pub trait GitRepository {
-    /// Determines if the given path is a repository.
-    ///
-    /// # Arguments
-    ///
-    /// * `path` - The path to check.
-    ///
-    /// # Returns
-    ///
-    /// `true` if the path is a valid Git repository, `false` otherwise.
-    fn is_repo(path: &Path) -> bool;
-
     /// Create a new instance of the GitRepository.
     ///
     /// # Arguments
@@ -88,19 +77,6 @@ pub struct LocalGitRepository {
 }
 
 impl GitRepository for LocalGitRepository {
-    fn is_repo(path: &Path) -> bool {
-        path.join(".git").exists()
-    }
-
-    /// Create a new instance of a `LocalGitRepository`.
-    ///
-    /// # Arguments
-    ///
-    /// * `path` - The path to the local Git repository.
-    ///
-    /// # Returns
-    ///
-    /// A `Result` containing the new instance of `LocalGitRepository` or an error.
     fn new(path: &PathBuf) -> Result<Self> {
         if !path.join(".git").exists() {
             return Err(WalrustError::PathError(path.clone()));
@@ -109,11 +85,6 @@ impl GitRepository for LocalGitRepository {
         Ok(LocalGitRepository { git })
     }
 
-    /// Get the current HEAD of the repository.
-    ///
-    /// # Returns
-    ///
-    /// A string representing the current HEAD commit hash.
     fn head(&self) -> String {
         self.git
             .head()
@@ -122,20 +93,6 @@ impl GitRepository for LocalGitRepository {
             .unwrap_or_else(|_| "HEAD".to_string())
     }
 
-    /// Get the commits in the repository between two dates.
-    ///
-    /// # Arguments
-    ///
-    /// * `since` - Inclusive start date for the commit range.
-    /// * `until` - Inclusive end date for the commit range.
-    ///
-    /// # Returns
-    ///
-    /// A vector of commits within the specified date range.
-    ///
-    /// # Errors
-    ///
-    /// Returns an error if the commit retrieval fails.
     fn get_commits(&self, since: DateTime<Utc>, until: DateTime<Utc>) -> Result<Vec<Commit>> {
         let mut revwalk = self.git.revwalk()?;
         revwalk.push_head()?; // Start from HEAD
