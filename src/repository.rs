@@ -2,7 +2,7 @@ use crate::commit::{Commit, CommitAuthor, CommitHash};
 use crate::{Result, WalrustError};
 use chrono::{DateTime, Utc};
 use git2::Repository as LibGitRepository;
-use std::path::{Path, PathBuf};
+use std::path::PathBuf;
 
 /// A trait representing a Git repository.
 ///

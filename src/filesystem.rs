@@ -58,6 +58,15 @@ pub trait Filesystem {
     /// }
     /// ```
     fn read_dir(&self, path: &Path) -> std::io::Result<Vec<PathBuf>>;
+
+    /// Checks if the given path exists.
+    ///
+    /// # Arguments
+    /// - `path`: The path to check.
+    ///
+    /// # Returns
+    /// `true` if the path exists, `false` otherwise.
+    fn exists(&self, path: &Path) -> bool;
 }
 
 /// A concrete implementation of the `Filesystem` trait that interacts with the local filesystem.
@@ -97,5 +106,9 @@ impl Filesystem for LocalFilesystem {
                     .collect()
             })
             .map_err(|e| std::io::Error::new(e.kind(), format!("Failed to read directory: {}", e)))
+    }
+
+    fn exists(&self, path: &Path) -> bool {
+        path.exists()
     }
 }

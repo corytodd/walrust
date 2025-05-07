@@ -111,36 +111,59 @@ impl<F: Filesystem, G: GitRepository> RepositoryLocator<F, G> {
         search_depth: usize,
     ) -> Result<Vec<Repository<G>>> {
         let mut repositories: Vec<Repository<G>> = Vec::new();
-        if search_depth == 0 {
+
+        if !self.filesystem.is_dir(search_root) {
             return Ok(repositories);
         }
 
-        if self.filesystem.is_dir(search_root) {
-            for entry in self.filesystem.read_dir(search_root).unwrap() {
-                let entry_path = entry.as_path();
-                if self.filesystem.is_dir(&entry_path) {
-                    if G::is_repo(&entry_path) {
-                        let repo: Result<Repository<G>> =
-                            Repository::new(&search_root.to_path_buf());
-                        match repo {
-                            Ok(repo) => repositories.push(repo),
-                            Err(err) => {
-                                eprintln!("Error creating repository object: {}", err);
-                            }
-                        }
-                    } else {
-                        let sub_repositories = self.locate_recursive(&entry_path, search_depth - 1);
-                        match sub_repositories {
-                            Ok(sub_repositories) => repositories.extend(sub_repositories),
-                            Err(err) => {
-                                eprintln!("Error locating sub-repositories: {}", err);
-                            }
-                        }
-                    }
+        // Happy path - the current search root is a repository
+        match self.try_make_repo(search_root) {
+            Some(repo) => {
+                repositories.push(repo);
+                return Ok(repositories);
+            }
+            None => {
+                // If the search depth is 0, stop searching further
+                if search_depth == 0 {
+                    return Ok(repositories);
+                }
+
+                // Otherwise, recursively search for repositories
+                for entry in self.filesystem.read_dir(search_root).unwrap() {
+                    let entry_path = entry.as_path();
+                    repositories.extend(self.locate_recursive(entry_path, search_depth - 1)?);
                 }
             }
         }
+
         Ok(repositories)
+    }
+
+    /// Attempts to create a repository object from the given path.
+    ///
+    /// This method checks if the path is a valid repository and creates
+    /// a `Repository<G>` object if it is. If the path is not a valid repository,
+    /// it returns `None`.
+    ///
+    /// # Arguments
+    /// - `path`: The path to check and create a repository object from.
+    ///
+    /// # Returns
+    /// An `Option<Repository<G>>` containing the repository object if successful,
+    /// or `None` if the path is not a valid repository.
+    fn try_make_repo(&self, path: &Path) -> Option<Repository<G>> {
+        let expect_git_path = path.join(".git");
+        if !self.filesystem.exists(&expect_git_path) {
+            return None;
+        }
+
+        match Repository::new(&path.to_path_buf()) {
+            Ok(repo) => Some(repo),
+            Err(_) => {
+                eprintln!("Failed to create repository from path: {}", path.display());
+                None
+            }
+        }
     }
 }
 

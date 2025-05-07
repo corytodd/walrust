@@ -49,7 +49,7 @@ pub enum MockFsNode {
 ///     assert!(children.contains_key("nested_1"));
 /// }
 /// ```
-pub fn create_mock_directory_tree() -> MockFsNode {
+fn create_mock_directory_tree() -> MockFsNode {
     MockFsNode::Directory(HashMap::from([(
         "root".to_string(),
         MockFsNode::Directory(HashMap::from([
@@ -128,13 +128,14 @@ impl MockFilesystem {
     ///
     /// # Example
     /// ```rust
-    /// use walrust::tests::mock_filesystem::{MockFilesystem, create_mock_directory_tree};
+    /// use walrust::tests::mock_filesystem::MockFilesystem;
     ///
-    /// let root = create_mock_directory_tree();
-    /// let fs = MockFilesystem::new(root);
+    /// let fs = MockFilesystem::new();
     /// ```
-    pub fn new(root: MockFsNode) -> Self {
-        Self { root }
+    pub fn new() -> Self {
+        MockFilesystem {
+            root: create_mock_directory_tree(),
+        }
     }
 
     /// Finds a node in the mock filesystem based on the given path.
@@ -147,10 +148,10 @@ impl MockFilesystem {
     ///
     /// # Example
     /// ```rust
-    /// use walrust::tests::mock_filesystem::{MockFilesystem, create_mock_directory_tree};
+    /// use walrust::tests::mock_filesystem::MockFilesystem;
     /// use std::path::Path;
     ///
-    /// let fs = MockFilesystem::new(create_mock_directory_tree());
+    /// let fs = MockFilesystem::new();
     /// let node = fs.find_node(Path::new("/root/nested_1/.git"));
     /// assert!(node.is_some());
     /// ```
@@ -169,7 +170,7 @@ impl MockFilesystem {
 
 impl Filesystem for MockFilesystem {
     fn new() -> Self {
-        Self::new(create_mock_directory_tree())
+        Self::new()
     }
 
     fn is_dir(&self, path: &Path) -> bool {
@@ -192,5 +193,9 @@ impl Filesystem for MockFilesystem {
                 "Directory not found",
             ))
         }
+    }
+
+    fn exists(&self, path: &Path) -> bool {
+        self.find_node(path).is_some()
     }
 }
