@@ -35,3 +35,23 @@ impl GitRepository for MockGitRepository {
         Ok(filtered_commits)
     }
 }
+
+pub struct MockBadGitRepository;
+
+impl GitRepository for MockBadGitRepository {
+    fn new(_path: &PathBuf) -> Result<Self> {
+        Err(walrust::WalrustError::GitError(git2::Error::from_str(
+            "Mock error",
+        )))
+    }
+
+    fn head(&self) -> String {
+        "".to_string()
+    }
+
+    fn get_commits(&self, _since: DateTime<Utc>, _until: DateTime<Utc>) -> Result<Vec<Commit>> {
+        Err(walrust::WalrustError::GitError(git2::Error::from_str(
+            "Mock error",
+        )))
+    }
+}

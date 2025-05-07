@@ -2,15 +2,15 @@ use std::path::{Path, PathBuf};
 mod mock_filesystem;
 use mock_filesystem::MockFilesystem;
 mod mock_git_repository;
-use mock_git_repository::MockGitRepository;
+use mock_git_repository::{MockBadGitRepository, MockGitRepository};
 use std::collections::HashSet;
 use walrust::repository_locator::RepositoryLocator;
 
 /// A type alias for a `RepositoryLocator` using the mock filesystem and mock Git repository.
-///
-/// This alias simplifies the usage of the `RepositoryLocator` in tests by
-/// specifying `MockFilesystem` and `MockGitRepository` as the generic parameters.
 type MockGitRepositoryLocator = RepositoryLocator<MockFilesystem, MockGitRepository>;
+
+/// A type alias for a `RepositoryLocator` using the mock filesystem and mock bad Git repository.
+type MockBadGitRepositoryLocator = RepositoryLocator<MockFilesystem, MockBadGitRepository>;
 
 /// A helper function to check the URIs of the repositories located by the `RepositoryLocator`.
 ///
@@ -101,4 +101,19 @@ fn test_discover_repositories_depth_3() {
     let search_depth = 3;
 
     run_tests(expected_uris, search_root, search_depth);
+}
+/// Simulate handling for a corrupt or otherwise invalid Git repository.
+/// The path exists on disk, but the repository cannot be opened.
+#[test]
+fn test_try_make_repo_error() {
+    let search_root = Path::new("root/nested_1");
+    let search_depth = 1;
+
+    let locator = MockBadGitRepositoryLocator::new(search_root, search_depth);
+
+    let repositories = locator.locate();
+
+    assert!(repositories.is_ok());
+    let repositories = repositories.unwrap();
+    assert_eq!(repositories.len(), 0);
 }
