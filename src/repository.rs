@@ -103,11 +103,13 @@ impl GitRepository for LocalGitRepository {
             let oid = oid?;
             let commit = self.git.find_commit(oid)?;
 
-            let commit_date = DateTime::from_timestamp(commit.time().seconds(), 0).ok_or(
-                WalrustError::GitError(git2::Error::from_str(
-                    "Failed to convert commit time to DateTime",
-                )),
-            )?;
+            let commit_time = commit.time().seconds();
+            let offset = commit.time().offset_minutes();
+            let commit_date =
+                DateTime::from_timestamp(commit_time, 0).ok_or(WalrustError::GitError(
+                    git2::Error::from_str("Failed to convert commit time to DateTime"),
+                ))?;
+            let commit_date = commit_date + chrono::Duration::minutes(offset as i64);
 
             // Stop processing if the commit is older than the `since` date
             if commit_date < since {

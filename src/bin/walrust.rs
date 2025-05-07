@@ -1,4 +1,6 @@
+use chrono::{DateTime, Local, NaiveDate, NaiveDateTime, ParseError, TimeZone};
 use clap::Parser;
+use log;
 use std::path::PathBuf;
 use std::process;
 use walrust::commit::Commit;
@@ -56,7 +58,15 @@ pub struct Config {
         value_hint = clap::ValueHint::Other,
         help = "Filters commits since this date, inclusive. Defaults to yesterday's date."
     )]
-    pub since: Option<chrono::DateTime<chrono::Utc>>,
+    #[arg(
+        short = 's',
+        long,
+        value_name = "SINCE",
+        value_hint = clap::ValueHint::Other,
+        value_parser = parse_datetime,
+        help = "Filters commits since this date, inclusive. Defaults to yesterday's date."
+    )]
+    pub since: Option<DateTime<Local>>,
 
     /// The ending date to filter commits (inclusive).
     #[arg(
@@ -64,9 +74,10 @@ pub struct Config {
         long,
         value_name = "UNTIL",
         value_hint = clap::ValueHint::Other,
+        value_parser = parse_datetime,
         help = "Filters commits until this date, inclusive."
     )]
-    pub until: Option<chrono::DateTime<chrono::Utc>>,
+    pub until: Option<DateTime<Local>>,
 
     /// The author name to filter commits by.
     #[arg(
@@ -77,6 +88,41 @@ pub struct Config {
         help = "Filters commits by author in 'Name <email>' format"
     )]
     pub author: Option<String>,
+}
+
+/// Parses a string into a `chrono::DateTime<Local>` object.
+///
+/// This function attempts to parse the input string into a `DateTime` object
+/// using common date-time formats. If the parsing fails, it returns an error.
+///
+/// # Arguments
+/// - `s`: The input string to parse.
+///
+/// # Returns
+/// A `Result` containing the parsed `DateTime<Local>` or a `ParseError`.
+///
+/// # Example
+/// ```rust
+/// let datetime = parse_datetime("2025-05-06").unwrap();
+/// println!("{}", datetime); // Outputs: "2025-05-06 00:00:00 +00:00"
+/// ```
+fn parse_datetime(s: &str) -> Result<DateTime<Local>, ParseError> {
+    DateTime::parse_from_rfc3339(s)
+        .map(|dt| dt.with_timezone(&Local))
+        .or_else(|_| {
+            // Fallback to a custom format with both date and time (e.g., "YYYY-MM-DD HH:MM:SS").
+            NaiveDateTime::parse_from_str(s, "%Y-%m-%d %H:%M:%S")
+                .map(|naive| Local.from_local_datetime(&naive).unwrap())
+        })
+        .or_else(|_| {
+            // Fallback to a date-only format (e.g., "YYYY-MM-DD").
+            NaiveDate::parse_from_str(s, "%Y-%m-%d").map(|naive| {
+                naive
+                    .and_hms_opt(0, 0, 0)
+                    .map(|naive| Local.from_local_datetime(&naive).unwrap())
+                    .expect("Invalid date format. Try YYYY-MM-DD.")
+            })
+        })
 }
 
 /// Retrieves the default author name and email from the local Git configuration.
@@ -159,17 +205,24 @@ fn run(config: Config) -> Result<(), String> {
         return Err("No repositories found".to_string());
     }
 
-    println!(
+    log::info!(
         "Found {} repositories in {:?}",
         repositories.len(),
         elapsed_time
     );
 
-    let commits_since = config.since.unwrap_or_else(|| {
-        let now = chrono::Utc::now();
-        now - chrono::Duration::hours(24)
-    });
-    let commits_until = config.until.unwrap_or_else(|| chrono::Utc::now());
+    let commits_since = config
+        .since
+        .unwrap_or_else(|| {
+            let now = chrono::Utc::now() - chrono::Duration::hours(24);
+            now.with_timezone(&Local)
+        })
+        .to_utc();
+
+    let commits_until = config
+        .until
+        .unwrap_or_else(|| chrono::Utc::now().with_timezone(&Local))
+        .to_utc();
 
     let author_match = config
         .author
@@ -177,14 +230,24 @@ fn run(config: Config) -> Result<(), String> {
 
     let author_predicate = |commit: &Commit| match author_match {
         ref author if author.is_empty() => true,
-        ref author if commit.author.email == *author || commit.author.email == *author => true,
+        ref author if commit.author.to_string() == *author => true,
         _ => false,
     };
 
+    log::info!(
+        "Filtering commits since: {}, until: {}, by author: {}",
+        commits_since.to_rfc3339(),
+        commits_until.to_rfc3339(),
+        author_match,
+    );
+
     for git_repo in &repositories {
-        println!("Repository: {}", git_repo.get_uri().display());
-        println!("Name: {}", git_repo.get_name());
-        println!("Head: {}", git_repo.vcs.head());
+        log::info!(
+            "Repository: {}, Name: {}, Head: {}",
+            git_repo.get_uri().display(),
+            git_repo.get_name(),
+            git_repo.vcs.head()
+        );
 
         let commits = git_repo.vcs.get_commits(commits_since, commits_until);
         match commits {
@@ -194,7 +257,7 @@ fn run(config: Config) -> Result<(), String> {
                     .filter(|commit| author_predicate(&commit))
                     .collect::<Vec<_>>();
 
-                println!("Matching Commit Count: {}", filtered_commits.len());
+                log::debug!("Matching Commit Count: {}", filtered_commits.len());
 
                 for commit in &filtered_commits {
                     println!(
@@ -232,5 +295,48 @@ fn main() {
             eprintln!("{}", err);
             process::exit(1);
         }
+    }
+}
+#[cfg(test)]
+mod tests {
+    use super::*;
+    use chrono::Utc;
+
+    #[test]
+    fn test_parse_datetime_rfc3339() {
+        let input = "1996-12-19T16:39:57-08:00";
+        let expected = Utc.with_ymd_and_hms(1996, 12, 20, 0, 39, 57).unwrap();
+        let result = parse_datetime(input).unwrap().to_utc();
+        assert_eq!(result, expected);
+    }
+
+    #[test]
+    fn test_parse_datetime_custom_format_with_time() {
+        let input = "2025-05-06 12:34:56";
+        let expected = Local.with_ymd_and_hms(2025, 5, 6, 12, 34, 56).unwrap();
+        let result = parse_datetime(input).unwrap();
+        assert_eq!(result, expected);
+    }
+
+    #[test]
+    fn test_parse_datetime_custom_format_date_only() {
+        let input = "2025-05-06";
+        let expected = Local.with_ymd_and_hms(2025, 5, 6, 0, 0, 0).unwrap();
+        let result = parse_datetime(input).unwrap();
+        assert_eq!(result, expected);
+    }
+
+    #[test]
+    fn test_parse_datetime_invalid_format() {
+        let input = "invalid-date";
+        let result = parse_datetime(input);
+        assert!(result.is_err());
+    }
+
+    #[test]
+    fn test_parse_datetime_empty_string() {
+        let input = "";
+        let result = parse_datetime(input);
+        assert!(result.is_err());
     }
 }
