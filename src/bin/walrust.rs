@@ -339,4 +339,34 @@ mod tests {
         let result = parse_datetime(input);
         assert!(result.is_err());
     }
+
+    #[test]
+    fn test_parse_datetime_with_whitespace() {
+        let input = " 2025-05-06 ";
+        let expected = Local.with_ymd_and_hms(2025, 5, 6, 0, 0, 0).unwrap();
+        let result = parse_datetime(input.trim()).unwrap();
+        assert_eq!(result, expected);
+    }
+
+    #[test]
+    fn test_run_no_repositories() {
+        let config = Config {
+            search_root: "/non/existent/path".into(),
+            search_depth: 3,
+            since: None,
+            until: None,
+            author: None,
+        };
+
+        let result = run(config);
+        assert!(result.is_err());
+        assert_eq!(result.unwrap_err(), "No repositories found".to_string());
+    }
+
+    #[test]
+    fn test_config_invalid_arguments() {
+        let args = vec!["walrust", "-r", "", "-d", "invalid-depth"];
+        let result = Config::try_parse_from(args);
+        assert!(result.is_err());
+    }
 }

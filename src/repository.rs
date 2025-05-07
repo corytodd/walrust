@@ -208,11 +208,7 @@ impl<G: GitRepository> Repository<G> {
     /// # Errors
     ///
     /// Returns an error if the commit retrieval fails.
-    pub fn get_commits(
-        &mut self,
-        since: DateTime<Utc>,
-        until: DateTime<Utc>,
-    ) -> Result<Vec<Commit>> {
+    pub fn get_commits(&self, since: DateTime<Utc>, until: DateTime<Utc>) -> Result<Vec<Commit>> {
         self.vcs.get_commits(since, until)
     }
 }
