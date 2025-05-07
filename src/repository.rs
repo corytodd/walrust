@@ -4,6 +4,20 @@ use chrono::{DateTime, Utc};
 use git2::Repository as LibGitRepository;
 use std::path::{Path, PathBuf};
 
+/// A trait representing a Git repository.
+///
+/// This trait provides methods for interacting with a Git repository,
+/// including checking if a path is a repository, creating a new instance,
+/// retrieving the current HEAD, and getting commits within a date range.
+///
+/// # Example
+/// ```rust
+/// use walrust::repository::{GitRepository, LocalGitRepository};
+/// use std::path::PathBuf;
+///
+/// let repo = LocalGitRepository::new(&PathBuf::from(".")).unwrap();
+/// println!("HEAD: {}", repo.head());
+/// ```
 pub trait GitRepository {
     /// Determines if the given path is a repository.
     ///

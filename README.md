@@ -2,6 +2,8 @@
 
 Walrust is a command-line tool designed to query commit data from multiple Git repositories simultaneously. It simplifies the process of gathering and analyzing commit history, making it easier for developers and teams to track changes across their projects.
 
+This is a port of my [Walrus C# project][1], mostly just for fun.
+
 ## Features
 
 - Query commit history across multiple Git repositories.
@@ -81,3 +83,5 @@ Contributions are welcome! If you'd like to contribute to Walrust, please fork t
 ## License
 
 This project is licensed under the MIT License. See the LICENSE file for more details.
+
+[1]: https://github.com/corytodd/Walrus

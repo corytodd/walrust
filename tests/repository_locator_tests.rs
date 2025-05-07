@@ -27,18 +27,6 @@ type MockGitRepositoryLocator = RepositoryLocator<MockFilesystem, MockGitReposit
 /// - The repository locator fails to locate repositories.
 /// - The number of discovered repositories does not match the expected number.
 /// - The discovered repository URIs do not match the expected URIs.
-///
-/// # Example
-/// ```rust
-/// use std::path::Path;
-/// use walrust::tests::repository_locator_tests::run_tests;
-///
-/// let expected_uris = vec![Path::new("root/nested_1").to_path_buf()];
-/// let search_root = Path::new("root");
-/// let search_depth = 1;
-///
-/// run_tests(expected_uris, search_root, search_depth);
-/// ```
 fn run_tests(expected_uris: Vec<PathBuf>, search_root: &Path, search_depth: usize) {
     let locator = MockGitRepositoryLocator::new(search_root, search_depth);
 

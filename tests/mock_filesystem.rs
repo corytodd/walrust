@@ -168,66 +168,14 @@ impl MockFilesystem {
 }
 
 impl Filesystem for MockFilesystem {
-    /// Creates a new `MockFilesystem` with a default mock directory tree.
-    ///
-    /// # Returns
-    /// A new instance of `MockFilesystem`.
-    ///
-    /// # Example
-    /// ```rust
-    /// use walrust::filesystem::Filesystem;
-    /// use walrust::tests::mock_filesystem::MockFilesystem;
-    ///
-    /// let fs = MockFilesystem::new();
-    /// assert!(fs.is_dir(std::path::Path::new("/root")));
-    /// ```
     fn new() -> Self {
         Self::new(create_mock_directory_tree())
     }
 
-    /// Checks if the given path is a directory in the mock filesystem.
-    ///
-    /// # Arguments
-    /// - `path`: A reference to a `Path` object representing the path to check.
-    ///
-    /// # Returns
-    /// `true` if the path is a directory, `false` otherwise.
-    ///
-    /// # Example
-    /// ```rust
-    /// use walrust::filesystem::Filesystem;
-    /// use walrust::tests::mock_filesystem::MockFilesystem;
-    /// use std::path::Path;
-    ///
-    /// let fs = MockFilesystem::new();
-    /// assert!(fs.is_dir(Path::new("/root/nested_1")));
-    /// ```
     fn is_dir(&self, path: &Path) -> bool {
         matches!(self.find_node(path), Some(MockFsNode::Directory(_)))
     }
 
-    /// Reads the contents of a directory in the mock filesystem.
-    ///
-    /// # Arguments
-    /// - `path`: A reference to a `Path` object representing the directory to read.
-    ///
-    /// # Returns
-    /// A `Result` containing a vector of `PathBuf` objects representing the contents
-    /// of the directory, or an error if the directory does not exist.
-    ///
-    /// # Errors
-    /// Returns an error if the directory is not found or is not a directory.
-    ///
-    /// # Example
-    /// ```rust
-    /// use walrust::filesystem::Filesystem;
-    /// use walrust::tests::mock_filesystem::MockFilesystem;
-    /// use std::path::Path;
-    ///
-    /// let fs = MockFilesystem::new();
-    /// let entries = fs.read_dir(Path::new("/root")).unwrap();
-    /// assert!(entries.iter().any(|entry| entry.ends_with("nested_1")));
-    /// ```
     fn read_dir(&self, path: &Path) -> std::io::Result<Vec<PathBuf>> {
         if let Some(MockFsNode::Directory(children)) = self.find_node(path) {
             Ok(children

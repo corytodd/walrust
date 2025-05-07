@@ -38,16 +38,6 @@ pub mod repository_locator;
 ///
 /// This alias simplifies error handling by using the `WalrustError` type
 /// as the error variant in `Result`.
-///
-/// # Example
-/// ```rust
-/// use walrust::Result;
-///
-/// fn example_function() -> Result<()> {
-///     // Your code here
-///     Ok(())
-/// }
-/// ```
 pub type Result<T> = std::result::Result<T, WalrustError>;
 
 /// Walrust error types.
@@ -79,22 +69,6 @@ pub enum WalrustError {
 }
 
 impl fmt::Display for WalrustError {
-    /// Formats the `WalrustError` for display.
-    ///
-    /// # Arguments
-    /// - `f`: The formatter to write the error message to.
-    ///
-    /// # Returns
-    /// A `fmt::Result` indicating success or failure.
-    ///
-    /// # Example
-    /// ```rust
-    /// use walrust::WalrustError;
-    /// use std::path::PathBuf;
-    ///
-    /// let error = WalrustError::PathError(PathBuf::from("/invalid/path"));
-    /// println!("{}", error); // Output: "Invalid path: /invalid/path"
-    /// ```
     fn fmt(&self, f: &mut fmt::Formatter<'_>) -> fmt::Result {
         match self {
             WalrustError::GitError(err) => write!(f, "Git error: {}", err),
@@ -107,46 +81,12 @@ impl fmt::Display for WalrustError {
 impl std::error::Error for WalrustError {}
 
 impl From<git2::Error> for WalrustError {
-    /// Converts a `git2::Error` into a `WalrustError`.
-    ///
-    /// # Arguments
-    /// - `err`: The `git2::Error` to convert.
-    ///
-    /// # Returns
-    /// A `WalrustError::GitError` variant containing the original error.
-    ///
-    /// # Example
-    /// ```rust
-    /// use walrust::WalrustError;
-    /// use git2::Error;
-    ///
-    /// let git_error = Error::from_str("Git operation failed");
-    /// let walrust_error: WalrustError = git_error.into();
-    /// println!("{}", walrust_error); // Output: "Git error: Git operation failed"
-    /// ```
     fn from(err: git2::Error) -> Self {
         WalrustError::GitError(err)
     }
 }
 
 impl From<io::Error> for WalrustError {
-    /// Converts an `io::Error` into a `WalrustError`.
-    ///
-    /// # Arguments
-    /// - `err`: The `io::Error` to convert.
-    ///
-    /// # Returns
-    /// A `WalrustError::IoError` variant containing the original error.
-    ///
-    /// # Example
-    /// ```rust
-    /// use walrust::WalrustError;
-    /// use std::io;
-    ///
-    /// let io_error = io::Error::new(io::ErrorKind::NotFound, "File not found");
-    /// let walrust_error: WalrustError = io_error.into();
-    /// println!("{}", walrust_error); // Output: "IO error: File not found"
-    /// ```
     fn from(err: io::Error) -> Self {
         WalrustError::IoError(err)
     }

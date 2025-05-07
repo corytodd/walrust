@@ -82,15 +82,14 @@ impl<F: Filesystem, G: GitRepository> RepositoryLocator<F, G> {
     /// # Example
     /// ```rust
     /// use walrust::repository_locator::GitRepositoryLocator;
-    /// let locator = GitRepositoryLocator::new(std::path::Path::new("/path/to/search"), 2);
+    /// let locator = GitRepositoryLocator::new(std::path::Path::new("/path/to/search"), 1);
     /// let repositories = locator.locate().unwrap();
     /// for repo in repositories {
     ///     println!("Found repository: {}", repo.uri.display());
     /// }
     /// ```
     pub fn locate(&self) -> Result<Vec<Repository<G>>> {
-        // Directory count is zero base so we need to add 1
-        self.locate_recursive(&self.search_root, self.search_depth + 1)
+        self.locate_recursive(&self.search_root, self.search_depth)
     }
 
     /// Recursively locates repositories in the given path.

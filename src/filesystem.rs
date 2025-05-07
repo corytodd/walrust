@@ -7,37 +7,6 @@ use std::path::{Path, PathBuf};
 /// such as checking if a path is a directory and reading the contents of a directory.
 /// It allows for custom implementations, making it easier to test code that interacts
 /// with the filesystem.
-///
-/// # Example
-/// ```rust
-/// use walrust::filesystem::Filesystem;
-/// use std::path::Path;
-///
-/// struct MockFilesystem;
-///
-/// impl Filesystem for MockFilesystem {
-///     fn new() -> Self {
-///         MockFilesystem
-///     }
-///
-///     fn is_dir(&self, path: &Path) -> bool {
-///         path == Path::new("/mock/directory")
-///     }
-///
-///     fn read_dir(&self, path: &Path) -> std::io::Result<Vec<std::path::PathBuf>> {
-///         if path == Path::new("/mock/directory") {
-///             Ok(vec![Path::new("/mock/directory/file1.txt").to_path_buf()])
-///         } else {
-///             Err(std::io::Error::new(std::io::ErrorKind::NotFound, "Directory not found"))
-///         }
-///     }
-/// }
-///
-/// let fs = MockFilesystem::new();
-/// assert!(fs.is_dir(Path::new("/mock/directory")));
-/// let files = fs.read_dir(Path::new("/mock/directory")).unwrap();
-/// assert_eq!(files.len(), 1);
-/// ```
 pub trait Filesystem {
     /// Creates a new instance of the filesystem.
     ///
@@ -112,64 +81,14 @@ pub trait Filesystem {
 pub struct LocalFilesystem;
 
 impl Filesystem for LocalFilesystem {
-    /// Creates a new instance of `LocalFilesystem`.
-    ///
-    /// # Returns
-    /// A new `LocalFilesystem` instance.
-    ///
-    /// # Example
-    /// ```rust
-    /// use walrust::filesystem::{Filesystem, LocalFilesystem};
-    ///
-    /// let fs = LocalFilesystem::new();
-    /// ```
     fn new() -> Self {
         LocalFilesystem
     }
 
-    /// Checks if the given path is a directory.
-    ///
-    /// # Arguments
-    /// - `path`: The path to check.
-    ///
-    /// # Returns
-    /// `true` if the path is a directory, `false` otherwise.
-    ///
-    /// # Example
-    /// ```rust
-    /// use walrust::filesystem::{Filesystem, LocalFilesystem};
-    /// use std::path::Path;
-    ///
-    /// let fs = LocalFilesystem::new();
-    /// assert!(fs.is_dir(Path::new(".")));
-    /// ```
     fn is_dir(&self, path: &Path) -> bool {
         path.is_dir()
     }
 
-    /// Reads the contents of a directory.
-    ///
-    /// # Arguments
-    /// - `path`: The path to the directory to read.
-    ///
-    /// # Returns
-    /// A `Result` containing a vector of `PathBuf` objects representing the contents
-    /// of the directory, or an error if the directory cannot be read.
-    ///
-    /// # Errors
-    /// Returns an error if the directory does not exist or cannot be accessed.
-    ///
-    /// # Example
-    /// ```rust
-    /// use walrust::filesystem::{Filesystem, LocalFilesystem};
-    /// use std::path::Path;
-    ///
-    /// let fs = LocalFilesystem::new();
-    /// let entries = fs.read_dir(Path::new(".")).unwrap();
-    /// for entry in entries {
-    ///     println!("Found: {}", entry.display());
-    /// }
-    /// ```
     fn read_dir(&self, path: &Path) -> std::io::Result<Vec<PathBuf>> {
         fs::read_dir(path)
             .map(|entries| {
